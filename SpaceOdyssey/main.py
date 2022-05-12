@@ -102,8 +102,8 @@ def main():
     # Create ufo player
     player = Player('images/ufo.png', 0.1*WIDTH, 0.45*HEIGHT)
     player.transform(70, 60) 
-    # Initial change in height == 0
-    playerY_change = 0
+    # Initial change in height == 7. Meaning 'Gravity' applied the moment game is started
+    playerY_change = 7
     
     # Create sprite for ufo jetpack
     animation_list = []
@@ -114,22 +114,34 @@ def main():
     
     # Create obstacle
     obstacle = Obstacle('images/Terran.png')
-    obstacle.transform(250, 250)
+    obs_SIZE = 150
+    obstacle.transform(obs_SIZE, obs_SIZE)
     
     running = True
     up = False
     # Intialise random height for single obstacle
-    y = random.randrange(0+10, (HEIGHT-250)-10)
+    y = random.randrange(0+10, (HEIGHT-obs_SIZE)-10)
     # Initialise obstacle scrolling speed
     obs_scroll = -8
+
+    font = pygame.font.SysFont(None, 50)
+    score = 0
+    
+    GAME_START = False
     while running:
         clock.tick(60)
 
         for i in range(2):
             screen.blit(background.bg, (i * WIDTH + background.scroll, 0))
 
-        obstacle.set_location(i * WIDTH + obs_scroll, y)
+        obstacle.set_location(WIDTH + obs_scroll, y)
         obstacle.draw(screen)
+        
+        # Distance score based on travel
+        score += 0.02
+        # Display score remove decimals using int casting, then cast to string for display
+        img = font.render(str(int(score)), True, (255,255,255))
+        screen.blit(img, (0,0))
         
         # Set obstacle and background scroll to be the same so that they move together
         background.scroll -= 8
@@ -139,11 +151,30 @@ def main():
             background.reset_scroll()
         
         # Change when to load a new obstacle, with random height between a range
-        if abs(image_scroll) > WIDTH + 300:
-            image_scroll = 0
-            y = random.randrange(0+10, (HEIGHT-250)-10)
+        if abs(obs_scroll) > WIDTH + obs_SIZE + 30:
+            obs_scroll = 0
+            y = random.randrange(0+10, (HEIGHT-obs_SIZE)-10)
         
         player.draw(screen)
+        
+        # Check if game has started
+        while not GAME_START:
+            # Display 'press any key to start'
+            start_font = pygame.font.SysFont(None, 30)
+            start = start_font.render('PRESS ANY KEY TO START', True, (255,255,255))
+            screen.blit(start, (WIDTH/2 - 300, HEIGHT/2))
+            # Display rest of contents including this start message
+            pygame.display.update()
+
+            for event in pygame.event.get():
+                # A key is pressed, exit the loop
+                if event.type == pygame.KEYDOWN:
+                    GAME_START = True
+
+                if event.type == pygame.QUIT:
+                    # User quits the game
+                    running = False
+                    GAME_START = True
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -179,7 +210,6 @@ def main():
         if player.collide:
             pygame.time.wait(1000)
             running = False
-
 
 
 if __name__ == '__main__':
