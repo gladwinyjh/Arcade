@@ -65,8 +65,9 @@ class Sprite():
 
 
 class Obstacle():
-    def __init__(self, PATH):
+    def __init__(self, PATH, scroll):
         self.icon = pygame.image.load(PATH)
+        self.scroll = scroll
 
     def transform(self, WIDTH, HEIGHT):
         self.icon = pygame.transform.scale(self.icon, (WIDTH, HEIGHT))
@@ -113,54 +114,39 @@ def main():
     flame = Sprite(animation_list, player.x, player.y)
     
     # Create obstacle
-    obstacle = Obstacle('images/Terran.png')
-    obs_SIZE = 150
-    obstacle.transform(obs_SIZE, obs_SIZE)
-    
+    obstacles_list = []
+    obs_SIZE = 175
+
+    for obs in os.listdir('images/obstacles'):
+        obstacle = Obstacle('images/obstacles/' + obs, -8)
+        obstacle.transform(obs_SIZE, obs_SIZE)
+        obstacles_list.append(obstacle)
+   
     running = True
     up = False
-    # Intialise random height for single obstacle
-    y = random.randrange(0+10, (HEIGHT-obs_SIZE)-10)
-    # Initialise obstacle scrolling speed
-    obs_scroll = -8
 
     font = pygame.font.SysFont(None, 50)
     score = 0
-    
     GAME_START = False
+
     while running:
         clock.tick(60)
 
         for i in range(2):
             screen.blit(background.bg, (i * WIDTH + background.scroll, 0))
-
-        obstacle.set_location(WIDTH + obs_scroll, y)
-        obstacle.draw(screen)
         
-        # Distance score based on travel
+       # Distance score based on travel
         score += 0.02
         # Display score remove decimals using int casting, then cast to string for display
         img = font.render(str(int(score)), True, (255,255,255))
         screen.blit(img, (0,0))
-        
-        # Set obstacle and background scroll to be the same so that they move together
-        background.scroll -= 8
-        obs_scroll -= 8
 
-        if abs(background.scroll) > WIDTH:
-            background.reset_scroll()
-        
-        # Change when to load a new obstacle, with random height between a range
-        if abs(obs_scroll) > WIDTH + obs_SIZE + 30:
-            obs_scroll = 0
-            y = random.randrange(0+10, (HEIGHT-obs_SIZE)-10)
-        
         player.draw(screen)
         
         # Check if game has started
         while not GAME_START:
             # Display 'press any key to start'
-            start_font = pygame.font.SysFont(None, 30)
+            start_font = pygame.font.SysFont(None, 35)
             start = start_font.render('PRESS ANY KEY TO START', True, (255,255,255))
             screen.blit(start, (WIDTH/2 - 300, HEIGHT/2))
             # Display rest of contents including this start message
@@ -175,6 +161,27 @@ def main():
                     # User quits the game
                     running = False
                     GAME_START = True
+        
+        timePoint = pygame.time.get_ticks()
+
+        # To be worked on: how obstacles are positioned and how they move
+        while timePoint % 10 == 0:
+            obstacle = obstacles_list[random.randrange(0, len(obstacles_list))]
+        obstacle.set_location(WIDTH + obstacle.scroll + 10, HEIGHT/2)
+        obstacle.draw(screen)
+        obstacle.scroll -= 8
+ 
+        # Set obstacle and background scroll to be the same so that they move together
+        background.scroll -= 8
+
+        if abs(background.scroll) > WIDTH:
+            background.reset_scroll()
+        
+        # Change when to load a new obstacle, with random height between a range
+        #for obstacle in obstacles_list:
+        #    if obstacle.x < -obs_SIZE:
+        #        obstacle.y = random.randrange(0+10, (HEIGHT-obs_SIZE)-10)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -194,9 +201,11 @@ def main():
         # If player collided into obstacle or player collided with the top or bottom of screen
         # Draw red rectangle around it and set collide to True
         # Collision is not perfect now because using colliderect
-        if player.rect.colliderect(obstacle.circle) or player.y == 0 or player.y == 540:
-            pygame.draw.rect(screen, (255,0,0), player.rect, 4)
-            player.collide = True
+        #for obstacle in obstacles_list:
+        #    if player.rect.colliderect(obstacle.circle) or player.y == 0 or player.y == 540:
+        #        pygame.draw.rect(screen, (255,0,0), player.rect, 4)
+        #        player.collide = True
+        #        break
         
         # If moving up, activate jetpack sprite
         if up:
